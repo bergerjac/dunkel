@@ -10,13 +10,29 @@ int buttonOne=0;
 int buttonTwo=0;
 
 void setup(){
-  size (800,800);
+  size (400,400);
   smooth();
   println(Serial.list());
-  myPort = new Serial(this, Serial.list()[1], 9600);
+  try{
+    myPort = new Serial(this, Serial.list()[0], 9600);
+  }
+  catch(Exception ex){
+     println("error");
+  }
   myPort.bufferUntil('\n');
   mov = new Movie(this, "final_comp.mov");
   mov.loop();
+}
+
+@Override void exit() {
+  mov.stop();
+  super.exit();
+}
+
+Serial validSerialPort(){
+  
+   Serial testPort = new Serial(this, Serial.list()[1], 9600);
+   return null;
 }
 
 void movieEvent(Movie movie) {
@@ -42,10 +58,10 @@ void serialEvent(Serial thisPort) {
 
 
 void draw(){  
-  image(mov, 12, 12);
+  image(mov, 0, 0);
     
-  float newSpeed = map(mouseX, 0, width, 0, 2);  // change here!!!! figure out soon
-  mov.speed(newSpeed);  
+  //float newSpeed = map(mouseX, 0, width, 0, 2);  // change here!!!! figure out soon
+  //mov.speed(newSpeed);  
                                                                 
   
 }
@@ -56,4 +72,6 @@ void keyPressed(){
   }
 }
 
-
+// tap -> name horizontal scrolling across screen
+// tap 2x -> record label
+// tap 3x -> 100px/s; 6x/min; ; (proj.dim: 1600pxx1067px) blocky, straight in the middle
