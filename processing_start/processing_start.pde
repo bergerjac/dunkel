@@ -10,8 +10,10 @@ int buttonOne=0;
 int buttonTwo=0;
 int nInputs = 3;     // number of expected inputs
 
+ScrollingText trest = new ScrollingText("my man");
 
 void setup(){
+println(trest.text);
   size (400,400);
   smooth();
   println(Serial.list());
@@ -89,6 +91,17 @@ void keyPressed(){
   if(key == 's'){
   save("study6.jpeg");
   }
+}
+
+public class ScrollingText{
+  public String text;
+  public ScrollingText(String text){
+    this.text = text;
+  }
+}
+
+void nameScrollingAcrossScreen(){
+
 }
 
 // tap -> name horizontal scrolling across screen
