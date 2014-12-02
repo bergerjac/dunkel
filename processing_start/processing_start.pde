@@ -2,68 +2,87 @@
 import processing.serial.*;
 import processing.video.*;
 
-Movie mov;
+Movie movie;
 
-Serial myPort;
+Serial port;
 float stickOne=1;
 int buttonOne=0;
 int buttonTwo=0;
+int nInputs = 3;     // number of expected inputs
+
 
 void setup(){
   size (400,400);
   smooth();
   println(Serial.list());
-  try{
-    myPort = new Serial(this, Serial.list()[0], 9600);
-  }
-  catch(Exception ex){
-     println("error");
-  }
-  myPort.bufferUntil('\n');
-  mov = new Movie(this, "final_comp.mov");
-  mov.loop();
+  
+  port = validSerialPort();
+  
+  port.bufferUntil('\n');
+  movie = new Movie(this, "final_comp.mov");
+   movie.loop();
 }
 
 @Override void exit() {
-  mov.stop();
-  super.exit();
+   if (movie != null) movie.stop();
+   super.exit();
 }
 
 Serial validSerialPort(){
-  
-   Serial testPort = new Serial(this, Serial.list()[1], 9600);
-   return null;
+  String[] portNames = Serial.list();
+  for(int i=0; i< portNames.length; i++){
+     Serial tempPort = trySerialPort(portNames[i]);
+     if(tempPort != null) {
+       println("port: " + portNames[i]);
+       return tempPort;
+     }
+  }
+  println("error: failed to initialize serial port.");
+  exit();
+  throw new RuntimeException();
 }
 
+Serial trySerialPort(String portName){
+  try{
+     Serial testPort = new Serial(this, portName, 9600);
+     return testPort;
+   }
+  catch(Exception ex){
+     println("invalid port");
+     return null;
+  }
+}
+
+
 void movieEvent(Movie movie) {
-  mov.read();  
+   movie.read();  
 }
 
 void serialEvent(Serial thisPort) {
   String inputString = thisPort.readStringUntil('\n');
 
-  if (inputString != null){
-    inputString = trim(inputString);                                                              // trim the carrige return and linefeed from the input string:
-   int sensors[] = int(split(inputString, ',')); 
-                                                                                      // split the input string at the commas
-                                                                                      // and convert the sections into integers:
-     if (sensors.length == 3) {                                                         
-      stickOne = int(map(sensors[0], 0, 1023, -2, 2));                  //might not work
-      buttonOne= int(map(sensors[1], 0, 1, 0, 1));                                // make sure to comment on what each stick does
-      buttonTwo= int(map(sensors[2], 0, 1, 0, 1));   
+  if (inputString != null) {
+    inputString = trim(inputString); // trim carrige return and linefeed from input string
+    // split input string at the commas;
+    int inputs[] = int(split(inputString, ',')); 
+    // convert sections integers:
+    if (inputs.length == nInputs) {                                                         
+      stickOne = remapToInt(inputs[0], 0, 1023, -2, 2);  //might not work
+      buttonOne= remapToInt(inputs[1], 0, 1, 0, 1);
+      buttonTwo= remapToInt(inputs[2], 0, 1, 0, 1);
       // IamExtra= int(map(sensors[3], 0, 1023, 1,400));        
      }
   }
 }
 
+int remapToInt(int inValue, float minInValue, float maxInValue, float minOutValue, float maxOutValue){
+ return int(map(inValue, minInValue, maxInValue, minOutValue, maxOutValue));
+}
 
 void draw(){  
-  image(mov, 0, 0);
-    
+  image(movie, 0, 0);
   //float newSpeed = map(mouseX, 0, width, 0, 2);  // change here!!!! figure out soon
-  //mov.speed(newSpeed);  
-                                                                
-  
+  ///movie.speed(newSpeed);
 }
 
 void keyPressed(){
