@@ -1,5 +1,5 @@
 boolean isDebug = true;
-boolean isLinux = true;
+boolean isLinux = false;
 boolean isWinds = !isLinux;
 
 // imports library
@@ -10,8 +10,8 @@ Movie movie;
 
 Serial port;
 float stickOne=1;
-int buttonOne=0;
-int buttonTwo=0;
+int button1=0;
+int button2=0;
 int nInputs = 3;     // number of expected inputs
 
 ArrayList<DJ> djs = new ArrayList<DJ>();  // list of DJs
@@ -24,7 +24,7 @@ void setup(){
   initMovie();
   
   // do this stuff AFTER serial port, movie 
-  size (400,400);
+  size (1700,1250);
   smooth();
   
   // init DJs in list
@@ -49,15 +49,18 @@ void setup(){
 
 void initMovie(){
   if(isWinds)
-    movie = new Movie(this, "final_comp.mov");
+    movie = new Movie(this, "test2.mp4");
 }
 void movieLooping(){
   if(isWinds)
     movie.loop();
 }
 void drawMovie(){
-  if(isWinds)
+  if(isWinds){
     image(movie, 0, 0);
+    movie.speed(stickOne);
+    //println(stickOne);
+  }
 }
 
 @Override void exit() {
@@ -80,7 +83,7 @@ Serial validSerialPort(){
 
 Serial trySerialPort(String portName){
   try{
-     Serial testPort = new Serial(this, portName, 9600);
+     Serial testPort = new Serial(this, "COM5", 9600);
      return testPort;
    }
   catch(Exception ex){
@@ -95,12 +98,14 @@ void movieEvent(Movie movie) {
 }
 
 void serialEvent(Serial thisPort) {
+  println("serialEvent");
   String inputString = thisPort.readStringUntil('\n');
 
   if (inputString == null) return;
 
   inputString = trim(inputString); // trim carrige return and linefeed from input string
   // split input string at the commas;
+  println(inputString);
   int inputs[] = int(split(inputString, ',')); 
   if (inputs.length != nInputs) { println("warn: {0} inputs; expected {1}", inputs.length, nInputs); return;} // UNexpected number of inputs
   
@@ -114,26 +119,21 @@ void processedInputs(int[] inputs){
   processedButton2(inputs[2]);
 }
 
-void processedPot(input){
-   stickOne = int(map(input, 0, 1023, -2, 2));// map 0:1023 -> -2:2
+void processedPot(int input){
+   stickOne = int(map(input, 0, 1023, 0, 100));// map 0:1023 -> -2:2
+   println(input);
 }
-void processedButton1(input){
+
+void processedButton1(int input){
   button1= int(map(input, 0, 1, 0, 1));
 }
-void processedButton2(input){
+
+void processedButton2(int input){
   button2= int(map(input, 0, 1, 0, 1));
 }
 
 void draw(){
   drawMovie();
-  //float newSpeed = map(mouseX, 0, width, 0, 2);  // change here!!!! figure out soon
-  ///movie.speed(newSpeed);
-}
-
-void keyPressed(){
-  if(key == 's'){
-  //save("study6.jpeg");
-  }
 }
 
 public class ScrollingText{
