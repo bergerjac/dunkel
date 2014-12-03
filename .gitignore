@@ -3,3 +3,4 @@ examples/
 *.mov
 lib/arduino/reference/
 lib/arduino/library/
+*.*~
