@@ -1,3 +1,7 @@
+boolean isDebug = true;
+boolean isLinux = true;
+boolean isWinds = !isLinux;
+
 // imports library
 import processing.serial.*;
 import processing.video.*;
@@ -10,19 +14,50 @@ int buttonOne=0;
 int buttonTwo=0;
 int nInputs = 3;     // number of expected inputs
 
-ScrollingText trest = new ScrollingText("my man");
+ArrayList<DJ> djs = new ArrayList<DJ>();  // list of DJs
+DJ dj;                                    // current DJ
 
 void setup(){
-println(trest.text);
-  size (400,400);
-  smooth();
-  println(Serial.list());
-  
   port = validSerialPort();
   
   port.bufferUntil('\n');
-  movie = new Movie(this, "final_comp.mov");
-   movie.loop();
+  initMovie();
+  
+  // do this stuff AFTER serial port, movie 
+  size (400,400);
+  smooth();
+  
+  // init DJs in list
+  //   first DJ is 'current'
+  dj = new DJ("UN", "UNNAMED ASSAULT SYSTEM");
+  djs.add(dj);
+  AddDJ("MICOL DANIELI", "030 RECORDINGS");
+  AddDJ("ANNA BOLENA", "IDROSCALO DISCHI");
+  AddDJ("SIRIO GRY J", "MONOLITH RECORDS");
+  AddDJ("CIRCULA", "");
+  AddDJ("RUFOX", "");
+  
+  
+//  for(int i=0; i< djs.size(); i++){
+//     DJ dj = djs.get(i);
+//     println(dj.name + dj.recordLabel);
+//  }
+  
+  movieLooping();
+}
+
+
+void initMovie(){
+  if(isWinds)
+    movie = new Movie(this, "final_comp.mov");
+}
+void movieLooping(){
+  if(isWinds)
+    movie.loop();
+}
+void drawMovie(){
+  if(isWinds)
+    image(movie, 0, 0);
 }
 
 @Override void exit() {
@@ -39,9 +74,8 @@ Serial validSerialPort(){
        return tempPort;
      }
   }
-  println("error: failed to initialize serial port.");
-  exit();
-  throw new RuntimeException();
+  exitThrow("failed to initialize valid serial port.");
+  return null; // never reached
 }
 
 Serial trySerialPort(String portName){
@@ -63,47 +97,106 @@ void movieEvent(Movie movie) {
 void serialEvent(Serial thisPort) {
   String inputString = thisPort.readStringUntil('\n');
 
-  if (inputString != null) {
-    inputString = trim(inputString); // trim carrige return and linefeed from input string
-    // split input string at the commas;
-    int inputs[] = int(split(inputString, ',')); 
-    // convert sections integers:
-    if (inputs.length == nInputs) {                                                         
-      stickOne = remapToInt(inputs[0], 0, 1023, -2, 2);  //might not work
-      buttonOne= remapToInt(inputs[1], 0, 1, 0, 1);
-      buttonTwo= remapToInt(inputs[2], 0, 1, 0, 1);
-      // IamExtra= int(map(sensors[3], 0, 1023, 1,400));        
-     }
-  }
+  if (inputString == null) return;
+
+  inputString = trim(inputString); // trim carrige return and linefeed from input string
+  // split input string at the commas;
+  int inputs[] = int(split(inputString, ',')); 
+  if (inputs.length != nInputs) { println("warn: {0} inputs; expected {1}", inputs.length, nInputs); return;} // UNexpected number of inputs
+  
+  processedInputs(inputs); // all inputs are processed
 }
 
-int remapToInt(int inValue, float minInValue, float maxInValue, float minOutValue, float maxOutValue){
- return int(map(inValue, minInValue, maxInValue, minOutValue, maxOutValue));
+void processedInputs(int[] inputs){
+  // process each input
+  processedPot(inputs[0]);
+  processedButton1(inputs[1]);
+  processedButton2(inputs[2]);
 }
 
-void draw(){  
-  image(movie, 0, 0);
+void processedPot(input){
+   stickOne = int(map(input, 0, 1023, -2, 2));// map 0:1023 -> -2:2
+}
+void processedButton1(input){
+  button1= int(map(input, 0, 1, 0, 1));
+}
+void processedButton2(input){
+  button2= int(map(input, 0, 1, 0, 1));
+}
+
+void draw(){
+  drawMovie();
   //float newSpeed = map(mouseX, 0, width, 0, 2);  // change here!!!! figure out soon
   ///movie.speed(newSpeed);
 }
 
 void keyPressed(){
   if(key == 's'){
-  save("study6.jpeg");
+  //save("study6.jpeg");
   }
 }
 
 public class ScrollingText{
+  PFont font;
+
+  int x, y;   // current position of text
+
   public String text;
   public ScrollingText(String text){
     this.text = text;
   }
+  
+  public void start(){
+    font = createFont("Orator Std", 64, true);
+    x = width + 20;    // off screen
+    y = height / 2; // halfway down canvas
+  }
+  public void draw(){
+    textFont(font);
+    // grey background
+    fill(153);
+    rect(0, 0, width, height);
+      
+    // text starts going offscreen -> draw another 50px behind
+     if (x < 0){
+      text(text, x + textWidth(text) + 50, y);
+    }
+   
+    // leading iteration completely offscreen -> set x: location of next iteration
+    if (x <= -textWidth(text)) {
+      x = x + (int)textWidth(text) + 50;
+    }
+   
+    // draw text
+    text(text, x, y);
+    
+    // move position one to the left
+    x--;
+  }
+}
+
+public class DJ{
+  public String name;
+  public String recordLabel;
+  public DJ(String name, String recordLabel){
+    this.name = name;
+    this.recordLabel = recordLabel;
+  }
+} 
+void AddDJ(String name, String recordLabel){
+  djs.add(new DJ(name,recordLabel));
 }
 
 void nameScrollingAcrossScreen(){
 
 }
 
-// tap -> name horizontal scrolling across screen
+// exits and throws a RuntimeException w/ msg
+void exitThrow(String message){
+  exit();
+  throw new RuntimeException(message);
+}
+
+// tap -> 1x, 100px/s: name horizontal scrolling across screen
 // tap 2x -> record label
 // tap 3x -> 100px/s; 6x/min; ; (proj.dim: 1600pxx1067px) blocky, straight in the middle
