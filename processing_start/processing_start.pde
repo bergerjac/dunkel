@@ -29,7 +29,7 @@ Movie movie;
 Serial port;
 KeyboardInputStream keyboard;
 float stickOne=1;
-int[] buttons=new int[6];
+TapThat[] buttons;
 int nInputs = 3;     // number of expected inputs
 
 ArrayList<DJ> djs = new ArrayList<DJ>();  // list of DJs
@@ -63,6 +63,15 @@ void setup(){
   AddDJ("SIRIO GRY J", "MONOLITH RECORDS");
   AddDJ("CIRCULA", "");
   AddDJ("RUFOX", "");
+  
+  buttons = new TapThat[]{
+    new TapThat(),
+    new TapThat(),
+    new TapThat(),
+    new TapThat(),
+    new TapThat(),
+    new TapThat()
+  };
   
   keyboard = new KeyboardInputStream();
   
@@ -182,11 +191,13 @@ void processedPot(int potInput){
 
 void processedButtons(int[] allInputs){
   for(int i=0, n=1; i< buttons.length; i++, n++){
-     buttons[i]= int(map(allInputs[n], 0, 1, 0, 1));
-     if(buttons[i] == 1){
+     int buttonEvent = buttons[i].checkButton(boolean(allInputs[n]));
+     if(buttonEvent == 1){
         queue.add(new ScrollingText(djs.get(i).name));
      }
-     print(buttons[i]);
+     else if(buttonEvent == 2){
+        queue.add(new ScrollingText(djs.get(i).recordLabel));
+     }
   }
 }
 
@@ -323,92 +334,105 @@ class KeyboardInputStream implements IInputStream, IButtonInputStream,  IPotInpu
    }
 }
 
-/*
-MULTI-CLICK: One Button, Multiple Events
+class TapThat {
 
-Oct 12, 2009
-Run checkButton() to retrieve a button event:
-Click
-Double-Click
-Hold
-Long Hold
-*/
-
-// Button timing variables
-int debounce = 20; // ms debounce period to prevent flickering when pressing or releasing the button
-int DCgap = 250; // max ms between clicks for a double click event
-int holdTime = 2000; // ms hold period: how long to wait for press+hold event
-int longHoldTime = 5000; // ms long hold period: how long to wait for press+hold event
-
-// Other button variables
-boolean buttonVal = true; // value read from button
-boolean buttonLast = true; // buffered value of the button's previous state
-boolean DCwaiting = false; // whether we're waiting for a double click (down)
-boolean DConUp = false; // whether to register a double click on next release, or whether to wait and click
-boolean singleOK = true; // whether it's OK to do a single click
-long downTime = -1; // time the button was pressed down
-long upTime = -1; // time the button was released
-boolean ignoreUp = false; // whether to ignore the button release because the click+hold was triggered
-boolean waitForUp = false; // when held, whether to wait for the up event
-boolean holdEventPast = false; // whether or not the hold event happened already
-boolean longHoldEventPast = false;// whether or not the long hold event happened already
-
-int checkButton()
-{ 
-  int event = 0;
-  // Read the state of the button
-  buttonVal = digitalRead(buttonPin);
-  // Button pressed down
-  if (buttonVal == false && buttonLast == true && (millis() - upTime) > debounce) {
-    downTime = millis();
-    ignoreUp = false;
-    waitForUp = false;
-    singleOK = true;
-    holdEventPast = false;
-    longHoldEventPast = false;
-    if ((millis()-upTime) < DCgap && DConUp == false && DCwaiting == true) DConUp = true;
-    else DConUp = false;
-    DCwaiting = false;
-  }
-  // Button released
-  else if (buttonVal == HIGH && buttonLast == LOW && (millis() - downTime) > debounce) { 
-    if (not ignoreUp) {
-      upTime = millis();
-      if (DConUp == false) DCwaiting = true;
-      else {
-        event = 2;
-        DConUp = false;
-        DCwaiting = false;
-        singleOK = false;
+  /*
+  MULTI-CLICK: One Button, Multiple Events
+  
+  Oct 12, 2009
+  Run checkButton() to retrieve a button event:
+  Click
+  Double-Click
+  Hold
+  Long Hold
+  */
+  // Button timing variables
+  int debounce = 20; // ms debounce period to prevent flickering when pressing or releasing the button
+  int maxConsecutiveClickGap = 250; // max ms between clicks for a double click event
+  int holdTime = 2000; // ms hold period: how long to wait for press+hold event
+  int longHoldTime = 5000; // ms long hold period: how long to wait for press+hold event
+  
+  // Other button variables
+  boolean buttonVal = true; // value read from button
+  boolean buttonPrev = true; // buffered value of the button's previous state
+  boolean isWaiting = false; // true if currently waiting for a double click (down)
+  boolean isConsecutiveClickOnRelease = false; // true: register a double click on next release; false: wait and click
+  boolean singleOK = true; // whether it's OK to do a single click
+  int downTime = -1; // time button was pressed down
+  int upTime = -1; // time button was released
+  boolean ignoreUp = false; // whether to ignore the button release because the click+hold was triggered
+  boolean waitForUp = false; // when held, whether to wait for the up event
+  boolean holdEventPast = false; // whether or not the hold event happened already
+  boolean longHoldEventPast = false;// whether or not the long hold event happened already
+  
+  int checkButton(boolean buttonInput)
+  {
+    /*
+      1 click
+      2 doubleClick
+      3 hold
+      4 longHold
+    */
+    int event = 0;
+    // set state of the button
+    buttonVal = buttonInput;
+    int millis = millis();
+    
+    // button pressed down
+    if (buttonVal == false && buttonPrev && (millis - upTime) > debounce) {
+      downTime = millis;
+      ignoreUp = false;
+      waitForUp = false;
+      singleOK = true;
+      holdEventPast = false;
+      longHoldEventPast = false;
+      if ((millis-upTime) < maxConsecutiveClickGap && isConsecutiveClickOnRelease == false && isWaiting == true) isConsecutiveClickOnRelease = true;
+      else isConsecutiveClickOnRelease = false;
+      isWaiting = false;
+    }
+    // Button released
+    else if (buttonVal && buttonPrev == false && (millis - downTime) > debounce) { 
+      if (!ignoreUp) {
+        upTime = millis;
+        if (isConsecutiveClickOnRelease == false) isWaiting = true;
+        else {
+          println("doubleclick");
+          event = 2;
+          isConsecutiveClickOnRelease = false;
+          isWaiting = false;
+          singleOK = false;
+        }
       }
     }
-  }
-  // Test for normal click event: DCgap expired
-  if ( buttonVal == HIGH && (millis()-upTime) >= DCgap && DCwaiting == true && DConUp == false && singleOK == true) {
-    event = 1;
-    DCwaiting = false;
-  }
-  // Test for hold
-  if (buttonVal == LOW && (millis() - downTime) >= holdTime) {
-    // Trigger "normal" hold
-    if (not holdEventPast) {
-      event = 3;
-      waitForUp = true;
-      ignoreUp = true;
-      DConUp = false;
-      DCwaiting = false;
-      //downTime = millis();
-      holdEventPast = true;
+    // Test for normal click event: maxConsecutiveClickGap expired
+    if ( buttonVal && (millis-upTime) >= maxConsecutiveClickGap && isWaiting && isConsecutiveClickOnRelease == false && singleOK) {
+      println("click");
+      event = 1;
+      isWaiting = false;
     }
-    // Trigger "long" hold
-    if ((millis() - downTime) >= longHoldTime) {
-      if (not longHoldEventPast) {
-        event = 4;
-        longHoldEventPast = true;
+    // Test for hold
+    if (buttonVal == false && (millis - downTime) >= holdTime) {
+      // Trigger "normal" hold
+      if (!holdEventPast) {
+        println("hold");
+        event = 3;
+        waitForUp = true;
+        ignoreUp = true;
+        isConsecutiveClickOnRelease = false;
+        isWaiting = false;
+        //downTime = millis();
+        holdEventPast = true;
+      }
+      // Trigger "long" hold
+      if ((millis - downTime) >= longHoldTime) {
+        if (!longHoldEventPast) {
+          println("long");
+          event = 4;
+          longHoldEventPast = true;
+        }
       }
     }
+    buttonPrev = buttonVal;
+    return event;
   }
-  buttonLast = buttonVal;
-  return event;
 }
-
