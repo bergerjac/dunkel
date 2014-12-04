@@ -1,6 +1,10 @@
 boolean isDebug = true;
-boolean isLinux = false;
+boolean mockSerialPort = true;
+boolean isLinux = true;
 boolean isWinds = !isLinux;
+String serialPortOverride = "COM5"; // default: null; "COM5" -> override and use serial port on COM5
+int minPlaybackSpeed = -2;// multiplier
+int maxPlaybackSpeed = 2000;
 
 // imports library
 import processing.serial.*;
@@ -9,18 +13,17 @@ import processing.video.*;
 Movie movie;
 
 Serial port;
+KeyboardInputStream keyboard;
 float stickOne=1;
-int button1=0;
-int button2=0;
+int[] buttons=new int[6];
 int nInputs = 3;     // number of expected inputs
 
 ArrayList<DJ> djs = new ArrayList<DJ>();  // list of DJs
 DJ dj;                                    // current DJ
 
 void setup(){
-  port = validSerialPort();
+  initSerialPort();
   
-  port.bufferUntil('\n');
   initMovie();
   
   // do this stuff AFTER serial port, movie 
@@ -37,6 +40,7 @@ void setup(){
   AddDJ("CIRCULA", "");
   AddDJ("RUFOX", "");
   
+  keyboard = new KeyboardInputStream();
   
 //  for(int i=0; i< djs.size(); i++){
 //     DJ dj = djs.get(i);
@@ -68,7 +72,17 @@ void drawMovie(){
    super.exit();
 }
 
+void initSerialPort(){
+  if(mockSerialPort){ return; }
+  port = validSerialPort();
+  port.bufferUntil('\n');
+}
+
 Serial validSerialPort(){
+  if (serialPortOverride != null){
+    Serial tempPort = trySerialPort(serialPortOverride);
+    return tempPort;
+  }
   String[] portNames = Serial.list();
   for(int i=0; i< portNames.length; i++){
      Serial tempPort = trySerialPort(portNames[i]);
@@ -83,11 +97,11 @@ Serial validSerialPort(){
 
 Serial trySerialPort(String portName){
   try{
-     Serial testPort = new Serial(this, "COM5", 9600);
+     Serial testPort = new Serial(this, portName, 9600);
      return testPort;
    }
   catch(Exception ex){
-     println("invalid port");
+     println("invalid port: "+ portName);
      return null;
   }
 }
@@ -113,29 +127,37 @@ void serialEvent(Serial thisPort) {
 }
 
 void keyPressed(){
-  if(key == 's'){
-  //save("study6.jpeg");
-  }
+  processedInputs(
+    new int[]{
+      keyboard.getPotValue(),
+      keyboard.getValue(1),
+      keyboard.getValue(2),
+      keyboard.getValue(3),
+      keyboard.getValue(4),
+      keyboard.getValue(5),
+      keyboard.getValue(6)
+    }
+  );
+  println();
 }
 
 void processedInputs(int[] inputs){
   // process each input
   processedPot(inputs[0]);
-  processedButton1(inputs[1]);
-  processedButton2(inputs[2]);
+  processedButtons(inputs);
+  
 }
 
-void processedPot(int input){
-   stickOne = int(map(input, 0, 1023, 0, 100));// map 0:1023 -> -2:2
-   println(input);
+void processedPot(int potInput){
+   stickOne = int(map(potInput, 0, 1023, minPlaybackSpeed, maxPlaybackSpeed));
+   print(stickOne+",");
 }
 
-void processedButton1(int input){
-  button1= int(map(input, 0, 1, 0, 1));
-}
-
-void processedButton2(int input){
-  button2= int(map(input, 0, 1, 0, 1));
+void processedButtons(int[] allInputs){
+  for(int i=0, n=1; i< buttons.length; i++, n++){
+     buttons[i]= int(map(allInputs[n], 0, 1, 0, 1));
+     print(buttons[i]);
+  }
 }
 
 void draw(){
@@ -205,7 +227,6 @@ void exitThrow(String message){
   throw new RuntimeException(message);
 }
 
-enum InputC{}
 
 interface IPotInputStream{
   int getPotValue();
@@ -237,10 +258,11 @@ class KeyboardInputStream implements IInputStream, IButtonInputStream,  IPotInpu
      return potValue;
    }
    int getValue(int buttonNumber) {
-      if(key >= 1 && key <= 9 && key == buttonNumber){
-         return 1;
-      }
-      return 0;
+     int intKey = Character.getNumericValue(key);
+     if(intKey >= 1 && intKey <= 9 && intKey == buttonNumber){
+        return 1;
+     }
+     return 0;
    }
 }
 
