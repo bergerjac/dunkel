@@ -5,6 +5,9 @@ boolean isDebug = true;
 boolean mockSerialPort = true;
 boolean isLinux = true;
 boolean isWinds = !isLinux;
+
+boolean isFullScreen = false; // fullscreen toggle
+//!!!!!!! set monitor: File -> Preferences: [Run sketches on display: ]
 String serialPortOverride = "COM5"; // default: null; "COM5" -> override and use serial port on COM5
 int minPlaybackSpeed = -2;// multiplier
 int maxPlaybackSpeed = 2000;
@@ -38,7 +41,15 @@ void setup(){
   initMovie();
   
   // do this stuff AFTER serial port, movie 
-  size (screenWidth,screenHeight);
+  
+  // fullscreen or not
+  if(isFullScreen){
+    size(displayWidth, displayHeight);
+  }
+  else{
+    size (screenWidth,screenHeight);
+  }
+  
   smooth();
   
   // init DJs in list
@@ -59,6 +70,10 @@ void setup(){
 //  }
   
   movieLooping();
+}
+
+boolean sketchFullScreen() {
+  return isFullScreen;
 }
 
 
@@ -180,8 +195,9 @@ void draw(){
   drawScrollingText();
 }
 
+// draws scrolling text, if necessary
 void drawScrollingText(){
-  //! remove scrollingtext.start() -> scrollingtext.draw()
+   // (NO text scrolling OR scrolling text finished) AND scrolling text in queue -> pop that mofo
    if(
    (scrollingText == null || (scrollingText != null && scrollingText.isFinished))
      &&
@@ -189,12 +205,10 @@ void drawScrollingText(){
      ){
     scrollingText = queue.remove();
     println(scrollingText.text);
-    scrollingText.start();
   }
-  println((scrollingText != null)+ " AND "+(scrollingText != null &&!scrollingText.isFinished)); 
   
+  // scrolling text (and not finished) -> draw that mofo
   if(scrollingText != null && !scrollingText.isFinished){
-    println("drawScrollingText"); 
     scrollingText.draw();
   }
 }
@@ -210,18 +224,15 @@ public class ScrollingText{
   
   public ScrollingText(String text){
     this.text = text;
-  }
-  
-  public void start(){
-    println("starting: "+text);
     isFinished = false;
     font = createFont("Orator Std", 64, true);
     x = width + 20;    // off screen
     y = height / 2; // halfway down canvas
-    draw();
   }
+  
   public void draw(){
-    println("drawing: "+!isFinished);
+    //println("drawing: "+!isFinished);
+    
     if(isFinished) return;
     
     textFont(font);
@@ -231,11 +242,11 @@ public class ScrollingText{
     rect(x, height*scrollingBGy, width, height/scrollingBGheight);
       
     // leading iteration completely offscreen -> 
-    if (x <= -textWidth(text)) {
+    if (x <= -textWidth(text)-20) {
       fill(255);
       rect(0, 0, width, height);
       isFinished = true;
-      println("drawing finished");
+      //println("drawing finished");
       return;
     }
    
@@ -245,8 +256,7 @@ public class ScrollingText{
     
     // move next position
     x -= scrollingSpeed;
-    println(x);
-    println("drawind: "+text);
+    //println("drawind: "+text);
   }
 }
 

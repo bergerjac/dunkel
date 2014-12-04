@@ -20,7 +20,10 @@ Jacob Berger | code | other nerdy shit
 
 ### todo
 
- - [ ] mock arduino input stream
-    - up/down &rarr; Pot
-    - number keys &rarr; button presses
+ - [x] mock arduino input stream
+    - [x] up/down &rarr; Pot
+    - [x] number keys &rarr; button presses
  - [ ] mock video for linux
+ 
+#### ref
+ - [processing Window-Size-and-Full-Screen](https://github.com/processing/processing/wiki/Window-Size-and-Full-Screen)
