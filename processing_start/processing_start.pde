@@ -10,6 +10,9 @@ int minPlaybackSpeed = -2;// multiplier
 int maxPlaybackSpeed = 2000;
 int screenWidth = 600;
 int screenHeight = 400;
+int scrollingSpeed = 4;// 1:n
+float scrollingBGy = 0.38;   // y pos  of scrolling text's background
+float scrollingBGheight = 5; // height of scrolling text's background:  larger number -> smaller box
 
 // imports library
 import processing.serial.*;
@@ -220,28 +223,24 @@ public class ScrollingText{
     textFont(font);
     // grey background
     fill(153);
-    rect(0, 0, width, height);
+    //from x,1/3 screen
+    rect(x, height*scrollingBGy, width, height/scrollingBGheight);
       
-    // text starts going offscreen -> draw another 50px behind
-    if (x < 0){
-      //fill(0);
-      //text(text, x + textWidth(text) + 50, y);
-    }
-       
     // leading iteration completely offscreen -> 
     if (x <= -textWidth(text)) {
-      println("drawing finished");
+      fill(255);
+      rect(0, 0, width, height);
       isFinished = true;
+      println("drawing finished");
       return;
     }
-   
    
     // draw text
     fill(0);
     text(text, x, y);
     
-    // move position one to the left
-    x--;
+    // move next position
+    x -= scrollingSpeed;
     println(x);
     println("drawind: "+text);
   }
