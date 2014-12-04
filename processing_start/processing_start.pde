@@ -16,6 +16,8 @@ int screenHeight = 400;
 int scrollingSpeed = 4;// 1:n
 float scrollingBGy = 0.38;   // y pos  of scrolling text's background
 float scrollingBGheight = 5; // height of scrolling text's background:  larger number -> smaller box
+float scrollingBGgreyscale = 155; // 0:255 (-> black:white)
+float scrollingBGgreyStrength = 255;// 0:255 (-> transparent:full) -> anything other than 255 -> a bit of a trailing shadow/fuzzy
 
 // imports library
 import processing.serial.*;
@@ -237,7 +239,7 @@ public class ScrollingText{
     
     textFont(font);
     // grey background
-    fill(153);
+    fill(scrollingBGgreyscale, scrollingBGgreyStrength);
     //from x,1/3 screen
     rect(x, height*scrollingBGy, width, height/scrollingBGheight);
       
