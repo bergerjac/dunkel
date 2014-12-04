@@ -1,3 +1,6 @@
+// tap 1x -> name horizontal scrolling across screen
+// tap 2x -> record label
+
 boolean isDebug = true;
 boolean mockSerialPort = true;
 boolean isLinux = true;
@@ -9,6 +12,7 @@ int maxPlaybackSpeed = 2000;
 // imports library
 import processing.serial.*;
 import processing.video.*;
+import java.util.*;
 
 Movie movie;
 
@@ -20,6 +24,8 @@ int nInputs = 3;     // number of expected inputs
 
 ArrayList<DJ> djs = new ArrayList<DJ>();  // list of DJs
 DJ dj;                                    // current DJ
+ScrollingText scrollingText;              // current scrolling text
+Queue<ScrollingText> queue = new LinkedList();
 
 void setup(){
   initSerialPort();
@@ -106,7 +112,6 @@ Serial trySerialPort(String portName){
   }
 }
 
-
 void movieEvent(Movie movie) {
    movie.read();  
 }
@@ -145,7 +150,16 @@ void processedInputs(int[] inputs){
   // process each input
   processedPot(inputs[0]);
   processedButtons(inputs);
-  
+  print(queue.size());
+
+  if(scrollingText != null && scrollingText.isFinished){
+     
+  }
+  if(scrollingText == null && queue.size() >= 1){
+    ScrollingText text = queue.remove();
+    print(text.text);
+    text.start();
+  }
 }
 
 void processedPot(int potInput){
@@ -156,6 +170,9 @@ void processedPot(int potInput){
 void processedButtons(int[] allInputs){
   for(int i=0, n=1; i< buttons.length; i++, n++){
      buttons[i]= int(map(allInputs[n], 0, 1, 0, 1));
+     if(buttons[i] == 1){
+        queue.add(new ScrollingText(djs.get(i).name));
+     }
      print(buttons[i]);
   }
 }
@@ -170,18 +187,24 @@ public class ScrollingText{
   PFont font;
 
   int x, y;   // current position of text
-
+  
   public String text;
+  public bool isFinished = true;
+  
   public ScrollingText(String text){
     this.text = text;
   }
   
   public void start(){
+    isFinished = false;
     font = createFont("Orator Std", 64, true);
     x = width + 20;    // off screen
     y = height / 2; // halfway down canvas
+    draw();
   }
   public void draw(){
+    if(isFinished) return;
+    
     textFont(font);
     // grey background
     fill(153);
@@ -191,11 +214,14 @@ public class ScrollingText{
      if (x < 0){
       text(text, x + textWidth(text) + 50, y);
     }
-   
-    // leading iteration completely offscreen -> set x: location of next iteration
+       
+    // leading iteration completely offscreen -> 
     if (x <= -textWidth(text)) {
+      isFinished = true;
+      // set x: location of next iteration
       x = x + (int)textWidth(text) + 50;
     }
+   
    
     // draw text
     text(text, x, y);
@@ -266,6 +292,3 @@ class KeyboardInputStream implements IInputStream, IButtonInputStream,  IPotInpu
    }
 }
 
-// tap -> 1x, 100px/s: name horizontal scrolling across screen
-// tap 2x -> record label
-// tap 3x -> 100px/s; 6x/min; ; (proj.dim: 1600pxx1067px) blocky, straight in the middle
