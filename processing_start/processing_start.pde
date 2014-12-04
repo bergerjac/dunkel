@@ -107,6 +107,12 @@ void serialEvent(Serial thisPort) {
   processedInputs(inputs); // all inputs are processed
 }
 
+void keyPressed(){
+  if(key == 's'){
+  //save("study6.jpeg");
+  }
+}
+
 void processedInputs(int[] inputs){
   // process each input
   processedPot(inputs[0]);
@@ -128,12 +134,6 @@ void draw(){
   drawMovie();
   //float newSpeed = map(mouseX, 0, width, 0, 2);  // change here!!!! figure out soon
   ///movie.speed(newSpeed);
-}
-
-void keyPressed(){
-  if(key == 's'){
-  //save("study6.jpeg");
-  }
 }
 
 public class ScrollingText{
@@ -195,6 +195,45 @@ void nameScrollingAcrossScreen(){
 void exitThrow(String message){
   exit();
   throw new RuntimeException(message);
+}
+
+enum InputC{}
+
+interface IPotInputStream{
+  int getPotValue();
+}
+interface IButtonInputStream{
+  int getValue(int buttonNumber);
+}
+interface IInputStream {
+ // int getNumberOfButtonInputs();
+}
+
+class KeyboardInputStream implements IInputStream, IButtonInputStream,  IPotInputStream {
+   int potValue = 512;
+   
+   int getPotValue(){
+     // up/down -> inc/decrement
+     if (key == CODED){
+         if (keyCode == UP) {// inc
+           potValue++;
+         }
+         else if (keyCode == DOWN) {// dec
+           potValue--;
+         } 
+     }
+     // keep between 0:1023
+     if(potValue < 0) potValue = 0;
+     if(potValue > 1023) potValue = 1023;
+     
+     return potValue;
+   }
+   int getValue(int buttonNumber) {
+      if(key >= 1 && key <= 9 && key == buttonNumber){
+         return 1;
+      }
+      return 0;
+   }
 }
 
 // tap -> 1x, 100px/s: name horizontal scrolling across screen
