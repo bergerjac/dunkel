@@ -8,6 +8,8 @@ boolean isWinds = !isLinux;
 String serialPortOverride = "COM5"; // default: null; "COM5" -> override and use serial port on COM5
 int minPlaybackSpeed = -2;// multiplier
 int maxPlaybackSpeed = 2000;
+int screenWidth = 600;
+int screenHeight = 400;
 
 // imports library
 import processing.serial.*;
@@ -33,7 +35,7 @@ void setup(){
   initMovie();
   
   // do this stuff AFTER serial port, movie 
-  size (1700,1250);
+  size (screenWidth,screenHeight);
   smooth();
   
   // init DJs in list
@@ -150,15 +152,13 @@ void processedInputs(int[] inputs){
   // process each input
   processedPot(inputs[0]);
   processedButtons(inputs);
-  print(queue.size());
+  println(queue.size());
 
-  if(scrollingText != null && scrollingText.isFinished){
-     
-  }
+ 
   if(scrollingText == null && queue.size() >= 1){
-    ScrollingText text = queue.remove();
-    print(text.text);
-    text.start();
+    scrollingText = queue.remove();
+    println(scrollingText.text);
+    scrollingText.start();
   }
 }
 
@@ -181,6 +181,16 @@ void draw(){
   drawMovie();
   //float newSpeed = map(mouseX, 0, width, 0, 2);  // change here!!!! figure out soon
   ///movie.speed(newSpeed);
+  drawScrollingText();
+}
+
+void drawScrollingText(){
+  println((scrollingText != null)+ " AND "+(scrollingText != null &&!scrollingText.isFinished)); 
+  
+  if(scrollingText != null && !scrollingText.isFinished){
+    println("drawScrollingText"); 
+    scrollingText.draw();
+  }
 }
 
 public class ScrollingText{
@@ -189,13 +199,14 @@ public class ScrollingText{
   int x, y;   // current position of text
   
   public String text;
-  public bool isFinished = true;
+  public boolean isFinished = true;
   
   public ScrollingText(String text){
     this.text = text;
   }
   
   public void start(){
+    println("starting: "+text);
     isFinished = false;
     font = createFont("Orator Std", 64, true);
     x = width + 20;    // off screen
@@ -203,6 +214,7 @@ public class ScrollingText{
     draw();
   }
   public void draw(){
+    println("drawing: "+!isFinished);
     if(isFinished) return;
     
     textFont(font);
@@ -211,12 +223,14 @@ public class ScrollingText{
     rect(0, 0, width, height);
       
     // text starts going offscreen -> draw another 50px behind
-     if (x < 0){
-      text(text, x + textWidth(text) + 50, y);
+    if (x < 0){
+      //fill(0);
+      //text(text, x + textWidth(text) + 50, y);
     }
        
     // leading iteration completely offscreen -> 
     if (x <= -textWidth(text)) {
+      println("drawing finished");
       isFinished = true;
       // set x: location of next iteration
       x = x + (int)textWidth(text) + 50;
@@ -224,10 +238,12 @@ public class ScrollingText{
    
    
     // draw text
+    fill(0);
     text(text, x, y);
     
     // move position one to the left
     x--;
+    println("drawind: "+text);
   }
 }
 
