@@ -4,3 +4,4 @@ examples/
 lib/arduino/reference/
 lib/arduino/library/
 *.*~
+*.mp4
