@@ -232,8 +232,7 @@ public class ScrollingText{
     if (x <= -textWidth(text)) {
       println("drawing finished");
       isFinished = true;
-      // set x: location of next iteration
-      x = x + (int)textWidth(text) + 50;
+      return;
     }
    
    
@@ -243,6 +242,7 @@ public class ScrollingText{
     
     // move position one to the left
     x--;
+    println(x);
     println("drawind: "+text);
   }
 }
