@@ -156,13 +156,6 @@ void processedInputs(int[] inputs){
   processedPot(inputs[0]);
   processedButtons(inputs);
   println(queue.size());
-
- 
-  if(scrollingText == null && queue.size() >= 1){
-    scrollingText = queue.remove();
-    println(scrollingText.text);
-    scrollingText.start();
-  }
 }
 
 void processedPot(int potInput){
@@ -188,6 +181,16 @@ void draw(){
 }
 
 void drawScrollingText(){
+  //! remove scrollingtext.start() -> scrollingtext.draw()
+   if(
+   (scrollingText == null || (scrollingText != null && scrollingText.isFinished))
+     &&
+   (queue.size() >= 1)
+     ){
+    scrollingText = queue.remove();
+    println(scrollingText.text);
+    scrollingText.start();
+  }
   println((scrollingText != null)+ " AND "+(scrollingText != null &&!scrollingText.isFinished)); 
   
   if(scrollingText != null && !scrollingText.isFinished){
@@ -200,6 +203,7 @@ public class ScrollingText{
   PFont font;
 
   int x, y;   // current position of text
+ // int boxHeight = scrollingBoxHeight;
   
   public String text;
   public boolean isFinished = true;
