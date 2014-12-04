@@ -1,3 +1,7 @@
+// output to serial com port:
+// output: "{POT=0:1023},{btn1:n=0,1}"
+// output: "512,0,0,1,0,0,0"
+
 int pot1 =0;
 int btn1 = 0;
 int btn2 = 0;
