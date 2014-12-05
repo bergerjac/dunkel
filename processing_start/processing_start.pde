@@ -246,8 +246,6 @@ public class ScrollingText{
     if(isFinished) return;
     
     textFont(font);
-    // grey background
-    fill(scrollingBGgreyscale, scrollingBGgreyStrength);
       
     // leading iteration completely offscreen -> 
     if (x <= -textWidth(text)-20) {
@@ -259,6 +257,7 @@ public class ScrollingText{
     // draw text
     fill(255);
     text(text, x, y);
+    
     
     // move next position
     x -= scrollingSpeed;
