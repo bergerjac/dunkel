@@ -3,17 +3,17 @@
 
 boolean isDebug = true;
 boolean mockSerialPort = true;
-boolean isLinux = true;
+boolean isLinux = false;
 boolean isWinds = !isLinux;
 
-boolean isFullScreen = false; // fullscreen toggle
+boolean isFullScreen = true; // fullscreen toggle
 //!!!!!!! set monitor: File -> Preferences: [Run sketches on display: ]
 String serialPortOverride = "COM5"; // default: null; "COM5" -> override and use serial port on COM5
 int minPlaybackSpeed = -2;// multiplier
-int maxPlaybackSpeed = 2000;
+int maxPlaybackSpeed = 4000;
 int screenWidth = 600;
 int screenHeight = 400;
-int scrollingSpeed = 4;// 1:n
+int scrollingSpeed = 10;// 1:n
 float scrollingBGy = 0.38;   // y pos  of scrolling text's background
 float scrollingBGheight = 5; // height of scrolling text's background:  larger number -> smaller box
 
@@ -37,7 +37,7 @@ Queue<ScrollingText> queue = new LinkedList();
 
 void setup(){
   initSerialPort();
-  
+  background(0);
   initMovie();
   
   // do this stuff AFTER serial port, movie 
@@ -87,7 +87,7 @@ void movieLooping(){
 }
 void drawMovie(){
   if(isWinds){
-    image(movie, 0, 0);
+    image(movie, 100, -100);
     movie.speed(stickOne);
     //println(stickOne);
   }
@@ -190,9 +190,17 @@ void processedButtons(int[] allInputs){
 
 void draw(){
   drawMovie();
-  //float newSpeed = map(mouseX, 0, width, 0, 2);  // change here!!!! figure out soon
-  ///movie.speed(newSpeed);
   drawScrollingText();
+  fill(0);
+  rect(0,0, 100, height);    //added two rectangels to block the letters filling the black background
+  rect(width-125,0, 125, height);
+  waterMark();
+}
+
+void waterMark(){
+  textSize(20);
+   fill(40);
+    text("StephenBontly.com", width - textWidth("StephenBontly.com"), height - 10);
 }
 
 // draws scrolling text, if necessary
@@ -225,7 +233,7 @@ public class ScrollingText{
   public ScrollingText(String text){
     this.text = text;
     isFinished = false;
-    font = createFont("Orator Std", 64, true);
+    font = createFont("Orator Std", 400, true);
     x = width + 20;    // off screen
     y = height / 2; // halfway down canvas
   }
@@ -237,22 +245,23 @@ public class ScrollingText{
     
     textFont(font);
     // grey background
-    fill(153);
+    //fill(153);
     //from x,1/3 screen
-    rect(x, height*scrollingBGy, width, height/scrollingBGheight);
+    //rect(x, height*scrollingBGy, width, height/scrollingBGheight);
       
     // leading iteration completely offscreen -> 
     if (x <= -textWidth(text)-20) {
-      fill(255);
-      rect(0, 0, width, height);
+      //fill(0);
+      //rect(0, 0, width, height);
       isFinished = true;
       //println("drawing finished");
       return;
     }
    
     // draw text
-    fill(0);
+    fill(255);
     text(text, x, y);
+    
     
     // move next position
     x -= scrollingSpeed;
