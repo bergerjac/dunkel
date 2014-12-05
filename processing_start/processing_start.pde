@@ -2,7 +2,7 @@
 // tap 2x -> record label
 
 boolean isDebug = true;
-boolean mockSerialPort = true;
+boolean mockSerialPort = false;// turn OFF for serial port
 boolean isLinux = false;
 boolean isWinds = !isLinux;
 
@@ -28,7 +28,7 @@ Movie movie;
 
 Serial port;
 KeyboardInputStream keyboard;
-float stickOne=1;
+float stickOne = 1.0;
 int[] buttons=new int[6];
 int nInputs = 3;     // number of expected inputs
 
@@ -139,7 +139,7 @@ void movieEvent(Movie movie) {
 }
 
 void serialEvent(Serial thisPort) {
-  println("serialEvent");
+  println("<serialEvent");
   String inputString = thisPort.readStringUntil('\n');
 
   if (inputString == null) return;
@@ -148,9 +148,9 @@ void serialEvent(Serial thisPort) {
   // split input string at the commas;
   println(inputString);
   int inputs[] = int(split(inputString, ',')); 
-  if (inputs.length != nInputs) { println("warn: {0} inputs; expected {1}", inputs.length, nInputs); return;} // UNexpected number of inputs
   
   processedInputs(inputs); // all inputs are processed
+  println(">serialEvent");
 }
 
 void keyPressed(){
@@ -176,17 +176,17 @@ void processedInputs(int[] inputs){
 }
 
 void processedPot(int potInput){
-   stickOne = int(map(potInput, 0, 1023, minPlaybackSpeed, maxPlaybackSpeed));
+   stickOne = map(potInput, 0, 1023, minPlaybackSpeed, maxPlaybackSpeed);
    print(stickOne+",");
 }
 
 void processedButtons(int[] allInputs){
   for(int i=0, n=1; i< buttons.length; i++, n++){
-     buttons[i]= int(map(allInputs[n], 0, 1, 0, 1));
+     buttons[i]= int(allInputs[n]);
      if(buttons[i] == 1){
         queue.add(new ScrollingText(djs.get(i).name));
      }
-     print(buttons[i]);
+     //print(buttons[i]);
   }
 }
 
