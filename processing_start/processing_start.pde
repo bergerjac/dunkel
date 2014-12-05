@@ -185,7 +185,7 @@ void processedInputs(int[] inputs){
 }
 
 void processedPot(int potInput){
-   stickOne = int(map(potInput, 0, 1023, minPlaybackSpeed, maxPlaybackSpeed));
+   stickOne = map(potInput, 0, 1023, minPlaybackSpeed, maxPlaybackSpeed);
    print(stickOne+",");
 }
 
